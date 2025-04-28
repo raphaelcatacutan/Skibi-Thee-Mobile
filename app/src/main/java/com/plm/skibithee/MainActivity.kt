@@ -59,18 +59,6 @@ class MainActivity : ComponentActivity() {
 
                 val context = LocalContext.current
 
-                val cameraLauncher = rememberLauncherForActivityResult(
-                    contract = androidx.activity.result.contract.ActivityResultContracts.TakePicture()
-                ) { success ->
-                    if (success) {
-                        // Only update photoUri after successful capture
-                        Log.d("Camera", "Captured Image URI: $photoUri")
-                    } else {
-                        // Reset photoUri if the camera capture was unsuccessful
-                        photoUri = null
-                    }
-                }
-
                 fun createImageFile(): File {
                     val timeStamp: String = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
                     return File.createTempFile("JPEG_${timeStamp}_", ".jpg", context.cacheDir)
@@ -99,11 +87,25 @@ class MainActivity : ComponentActivity() {
 
                             Spacer(modifier = Modifier.height(16.dp))
 
-                            // Capture Image button
-                            Button(onClick = {
-                                // Reset photoUri before launching the camera intent to avoid showing a blank image
-                                photoUri = null
 
+                            val cameraLauncher = rememberLauncherForActivityResult(
+                                contract = androidx.activity.result.contract.ActivityResultContracts.TakePicture()
+                            ) { success ->
+                                if (success) {
+                                    // Successfully captured, update photoUri with the actual captured image URI
+                                    photoUri = FileProvider.getUriForFile(
+                                        context,
+                                        "${context.packageName}.fileprovider",
+                                        photoFile ?: return@rememberLauncherForActivityResult
+                                    )
+                                } else {
+                                    // Reset if capture fails or is canceled
+                                    photoUri = null
+                                }
+                            }
+
+                            Button(onClick = {
+                                // Do not reset photoUri here, only handle it after the camera capture
                                 val file = createImageFile()
                                 val uri = FileProvider.getUriForFile(
                                     context,
@@ -111,8 +113,8 @@ class MainActivity : ComponentActivity() {
                                     file
                                 )
                                 photoFile = file
-                                photoUri = uri // Set URI before launching the camera
 
+                                // Launch the camera and handle the result in the callback
                                 cameraLauncher.launch(uri)
                             }) {
                                 Text(if (photoUri == null) "Capture Image" else "Retake Image")
@@ -120,20 +122,20 @@ class MainActivity : ComponentActivity() {
 
                             Spacer(modifier = Modifier.height(16.dp))
 
-                            // Display captured image only if photoUri is not null
                             photoUri?.let { uri ->
+                                // Only show image if photoUri is not null
                                 val painter = rememberAsyncImagePainter(model = uri)
                                 Image(
                                     painter = painter,
                                     contentDescription = "Captured image",
                                     modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(200.dp),
-                                    contentScale = ContentScale.Crop
+                                        .fillMaxWidth(),
+                                    contentScale = ContentScale.FillWidth
                                 )
 
                                 Spacer(modifier = Modifier.height(16.dp))
                             }
+
 
                             // Send button to upload image
                             Button(onClick = {
