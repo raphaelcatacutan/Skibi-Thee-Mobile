@@ -56,6 +56,7 @@ class MainActivity : ComponentActivity() {
                 var username by remember { mutableStateOf("") }
                 var photoUri by remember { mutableStateOf<Uri?>(null) }
                 var photoFile by remember { mutableStateOf<File?>(null) }
+                var localIp by remember { mutableStateOf("") }
 
                 val context = LocalContext.current
 
@@ -77,6 +78,14 @@ class MainActivity : ComponentActivity() {
                                 .fillMaxWidth(),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
+                            TextField(
+                                value = localIp,
+                                onValueChange = { localIp = it },
+                                label = { Text("Enter server IP (e.g. 192.168.1.13)") },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+
+                            Spacer(modifier = Modifier.height(16.dp))
                             // TextField to enter username
                             TextField(
                                 value = username,
@@ -140,7 +149,7 @@ class MainActivity : ComponentActivity() {
                             // Send button to upload image
                             Button(onClick = {
                                 val file = photoFile
-                                if (file != null && username.isNotBlank()) {
+                                if (file != null && username.isNotBlank() && localIp.isNotBlank()) {
                                     val requestBody = MultipartBody.Builder()
                                         .setType(MultipartBody.FORM)
                                         .addFormDataPart("username", username)
@@ -151,7 +160,7 @@ class MainActivity : ComponentActivity() {
                                         .build()
 
                                     val request = Request.Builder()
-                                        .url("http://192.168.1.13:3000/api/upload")
+                                        .url("http://${localIp}:3000/api/upload") // Use the IP from the field
                                         .post(requestBody)
                                         .build()
 
@@ -167,14 +176,14 @@ class MainActivity : ComponentActivity() {
                                         }
                                     })
                                 } else {
-                                    Log.w("Validation", "Name or image is empty")
-                                    appMessage = "Name or image is empty"
+                                    Log.w("Validation", "Name, IP, or image is empty")
+                                    appMessage = "Please enter name, IP address, and capture an image"
                                 }
                             }) {
                                 Text("Send")
                             }
 
-                            // Display app message after action
+                            // Display app message
                             Text(appMessage)
                         }
                     }
