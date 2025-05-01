@@ -182,7 +182,15 @@ class MainActivity : ComponentActivity() {
                             }) {
                                 Text("Send")
                             }
-
+                            val textLogo = R.drawable.skibitheerivals_textlogo
+                            Image(
+                                painter = rememberAsyncImagePainter(model = textLogo),
+                                contentDescription = "Drawable image",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = 16.dp, top = 64.dp, end = 16.dp, bottom = 16.dp),
+                                contentScale = ContentScale.FillWidth
+                            )
                             // Display app message
                             Text(appMessage)
                         }
